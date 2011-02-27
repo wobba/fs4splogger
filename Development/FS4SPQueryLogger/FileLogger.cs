@@ -22,9 +22,11 @@ namespace mAdcOW.FS4SPQueryLogger
         private readonly Timer _timer = new Timer(500);
         private long _lastMaxOffset;
         private readonly XslCompiledTransform _xct;
+        private string _qrLocation;
 
-        public FileLogger()
+        public FileLogger( string qrLocation )
         {
+            _qrLocation = qrLocation;
             Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("mAdcOW.FS4SPQueryLogger.xmlrender.xslt");
             XmlReader xr = XmlReader.Create(s);
             _xct = new XslCompiledTransform();
@@ -70,9 +72,9 @@ namespace mAdcOW.FS4SPQueryLogger
             return DateTime.ParseExact(line.Substring(dateStart, dateEnd - dateStart), @"dd\/MMM\/yyyy:HH:mm:ss zz00", null);
         }
 
-        private static string GetQueryResultXml(string query)
+        private string GetQueryResultXml(string query)
         {
-            string url = "http://localhost:13280/cgi-bin/xsearch" + query + "&nolog";
+            string url = _qrLocation + "/cgi-bin/xsearch" + query + "&nolog";
             WebClient client = new WebClient();
 
             return client.DownloadString(url);

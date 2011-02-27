@@ -37,6 +37,8 @@
             this.xmlSaveButton = new System.Windows.Forms.Button();
             this.saveXmlDialog = new System.Windows.Forms.SaveFileDialog();
             this.clearQueryListButton = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.qrServerLocation = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // logButton
@@ -126,12 +128,33 @@
             this.clearQueryListButton.UseVisualStyleBackColor = false;
             this.clearQueryListButton.Click += new System.EventHandler(this.clearQueryListButton_Click);
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Berlin Sans FB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(303, 18);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(58, 13);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "QR Server";
+            // 
+            // qrServerLocation
+            // 
+            this.qrServerLocation.Font = new System.Drawing.Font("Berlin Sans FB", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.qrServerLocation.Location = new System.Drawing.Point(366, 15);
+            this.qrServerLocation.Name = "qrServerLocation";
+            this.qrServerLocation.Size = new System.Drawing.Size(134, 22);
+            this.qrServerLocation.TabIndex = 8;
+            this.qrServerLocation.Text = "http://localhost:13280";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LightSteelBlue;
             this.ClientSize = new System.Drawing.Size(897, 542);
+            this.Controls.Add(this.qrServerLocation);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.clearQueryListButton);
             this.Controls.Add(this.xmlSaveButton);
             this.Controls.Add(this.label2);
@@ -157,6 +180,8 @@
         private System.Windows.Forms.Button xmlSaveButton;
         private System.Windows.Forms.SaveFileDialog saveXmlDialog;
         private System.Windows.Forms.Button clearQueryListButton;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox qrServerLocation;
     }
 }
 

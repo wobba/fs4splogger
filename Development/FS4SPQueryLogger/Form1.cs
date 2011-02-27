@@ -7,7 +7,7 @@ namespace mAdcOW.FS4SPQueryLogger
     public partial class Form1 : Form
     {
         private bool _isLogging;
-        private readonly FileLogger _logger = new FileLogger();
+        private FileLogger _logger;
         private readonly Action<LogEntry> _act;
 
         public Form1()
@@ -30,6 +30,7 @@ namespace mAdcOW.FS4SPQueryLogger
                 _isLogging = true;
                 logButton.Text = "Stop Logging";
                 queryList.DisplayMember = "Query";
+                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] {' ', '/'}));
                 _logger.Start(_act);
             }
             else
@@ -43,7 +44,7 @@ namespace mAdcOW.FS4SPQueryLogger
         private void QueryListSelectedIndexChanged(object sender, EventArgs e)
         {
             xmlSaveButton.Enabled = true;
-            var entry = (LogEntry)queryList.SelectedItem;
+            var entry = (LogEntry) queryList.SelectedItem;
             if (entry == null) return;
             webBrowser1.DocumentText = entry.Html;
         }
@@ -59,7 +60,7 @@ namespace mAdcOW.FS4SPQueryLogger
             {
                 using (StreamWriter writer = new StreamWriter(saveXmlDialog.OpenFile()))
                 {
-                    var entry = (LogEntry)queryList.SelectedItem;
+                    var entry = (LogEntry) queryList.SelectedItem;
                     writer.Write(entry.Xml);
                 }
             }
