@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace mAdcOW.FS4SPQueryLogger
@@ -9,6 +10,7 @@ namespace mAdcOW.FS4SPQueryLogger
         private bool _isLogging;
         private FileLogger _logger;
         private readonly Action<LogEntry> _act;
+        private LogEntry _lastEntry;
 
         public Form1()
         {
@@ -21,6 +23,17 @@ namespace mAdcOW.FS4SPQueryLogger
             InitializeComponent();
             _act = query => queryList.Invoke(new MethodInvoker(
                                                  () => queryList.Items.Add(query)));
+            webBrowser1.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser1_DocumentCompleted);
+        }
+
+        void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            var entry = (LogEntry)queryList.SelectedItem;
+            if (webBrowser1.Document.Body != null)
+            {
+                // set the y-position for the element
+                webBrowser1.Document.Window.ScrollTo(0, entry.Ypos);
+            }
         }
 
         private void LogButtonClick(object sender, EventArgs e)
@@ -45,8 +58,14 @@ namespace mAdcOW.FS4SPQueryLogger
         {
             xmlSaveButton.Enabled = true;
             var entry = (LogEntry) queryList.SelectedItem;
-            if (entry == null) return;
-            webBrowser1.DocumentText = entry.Html;
+            if (entry == null) return;            
+            if (_lastEntry != null && webBrowser1.Document.Body != null)
+            {
+                // save the current Y position
+                _lastEntry.Ypos = webBrowser1.Document.Body.ScrollTop;
+            }
+            _lastEntry = entry;
+            webBrowser1.DocumentText = entry.Html;            
         }
 
         private void XmlSaveButtonClick(object sender, EventArgs e)

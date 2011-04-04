@@ -11,5 +11,6 @@ namespace mAdcOW.FS4SPQueryLogger
         public string Xml { get; set; }
         public string Html { get; set; }
         public string HttpParams { get; set; }
+        public int Ypos { get; set; }
     }
 }
