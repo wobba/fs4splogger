@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -24,7 +25,7 @@ namespace mAdcOW.FS4SPQueryLogger
         private readonly XslCompiledTransform _xct;
         private string _qrLocation;
 
-        public FileLogger( string qrLocation )
+        public FileLogger(string qrLocation)
         {
             _qrLocation = qrLocation;
             Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("mAdcOW.FS4SPQueryLogger.xmlrender.xslt");
@@ -33,7 +34,7 @@ namespace mAdcOW.FS4SPQueryLogger
             _xct.Load(xr);
 
             _logPath = Path.Combine(Environment.GetEnvironmentVariable("FASTSEARCH"), @"var\log\querylogs");
-            _timer.Elapsed += _timer_Elapsed;            
+            _timer.Elapsed += _timer_Elapsed;
         }
 
         private void _timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -44,8 +45,8 @@ namespace mAdcOW.FS4SPQueryLogger
                 string line = ReadLastLine(GetCurrentFile());
                 int start = line.IndexOf("GET ");
                 if (start == -1) return;
-                                
-                int end = line.IndexOf(' ', start + 5);                
+
+                int end = line.IndexOf(' ', start + 5);
                 string query = line.Substring(start, end - start);
                 if (query.EndsWith("nolog")) return;
                 NameValueCollection param = HttpUtility.ParseQueryString(query);
@@ -56,7 +57,8 @@ namespace mAdcOW.FS4SPQueryLogger
                                      {
                                          Query = dt.ToString("yyyy-MM-dd HH:mm:ss") + " " + param["query"],
                                          HttpParams = query,
-                                         Xml = GetQueryResultXml(query)
+                                         Xml = GetQueryResultXml(query),
+                                         RankLog = GetQueryRankLog(query)
                                      };
                 entry.Html = GetQueryResultHtml(entry.Xml);
 
@@ -67,20 +69,42 @@ namespace mAdcOW.FS4SPQueryLogger
 
         private static DateTime GetQueryDate(string line)
         {
-            int dateStart = line.IndexOf('[')+1;
+            int dateStart = line.IndexOf('[') + 1;
             int dateEnd = line.IndexOf(']');
-            return DateTime.ParseExact(line.Substring(dateStart, dateEnd - dateStart), @"dd\/MMM\/yyyy:HH:mm:ss zz00", null);
+            string date = line.Substring(dateStart, dateEnd - dateStart);
+
+            DateTime dt;
+            if (!DateTime.TryParseExact(date, @"dd\/MMM\/yyyy:HH:mm:ss zz00", null, DateTimeStyles.None, out dt))
+            {
+                if (!DateTime.TryParseExact(date, @"dd\/MMM\/yyyy:HH:mm:ss +zz00", null, DateTimeStyles.None, out dt))
+                {
+                    if (!DateTime.TryParseExact(date, @"dd\/MMM\/yyyy:HH:mm:ss +zz00", null, DateTimeStyles.None, out dt))
+                    {
+                        if (!DateTime.TryParse(date, null, DateTimeStyles.None, out dt))
+                        {
+                            dt = DateTime.Now;
+                        }
+                    }
+                }
+            }
+            return dt;
         }
 
         private string GetQueryResultXml(string query)
         {
             string url = _qrLocation + "/cgi-bin/xsearch" + query + "&nolog";
             WebClient client = new WebClient();
-
             return client.DownloadString(url);
         }
 
-        private string GetQueryResultHtml( string xml )
+        private string GetQueryRankLog(string query)
+        {
+            string url = _qrLocation + "/cgi-bin/search" + query + "&ranklog&nolog";
+            WebClient client = new WebClient();
+            return client.DownloadString(url);
+        }
+
+        private string GetQueryResultHtml(string xml)
         {
             StringReader sReader = new StringReader(xml);
             XmlReader reader = XmlReader.Create(sReader);
@@ -128,7 +152,7 @@ namespace mAdcOW.FS4SPQueryLogger
                 FileStream stream = new FileStream(path, FileMode.Open, FileSystemRights.Read, FileShare.ReadWrite,
                                                    16384, FileOptions.RandomAccess))
             {
-                long endpos = stream.Length/charsize;
+                long endpos = stream.Length / charsize;
                 if (endpos == _lastMaxOffset) return string.Empty;
                 _lastMaxOffset = endpos;
 

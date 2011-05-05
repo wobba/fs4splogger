@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -23,16 +24,16 @@ namespace mAdcOW.FS4SPQueryLogger
             InitializeComponent();
             _act = query => queryList.Invoke(new MethodInvoker(
                                                  () => queryList.Items.Add(query)));
-            webBrowser1.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser1_DocumentCompleted);
+            resultXmlBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser1_DocumentCompleted);
         }
 
         void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             var entry = (LogEntry)queryList.SelectedItem;
-            if (webBrowser1.Document.Body != null)
+            if (resultXmlBrowser.Document.Body != null)
             {
                 // set the y-position for the element
-                webBrowser1.Document.Window.ScrollTo(0, entry.Ypos);
+                resultXmlBrowser.Document.Window.ScrollTo(0, entry.Ypos);
             }
         }
 
@@ -59,13 +60,16 @@ namespace mAdcOW.FS4SPQueryLogger
             xmlSaveButton.Enabled = true;
             var entry = (LogEntry) queryList.SelectedItem;
             if (entry == null) return;            
-            if (_lastEntry != null && webBrowser1.Document.Body != null)
+            if (_lastEntry != null && resultXmlBrowser.Document.Body != null)
             {
                 // save the current Y position
-                _lastEntry.Ypos = webBrowser1.Document.Body.ScrollTop;
+                _lastEntry.Ypos = resultXmlBrowser.Document.Body.ScrollTop;
             }
             _lastEntry = entry;
-            webBrowser1.DocumentText = entry.Html;            
+            resultXmlBrowser.DocumentText = entry.Html;
+            fqlBrowser.DocumentText = entry.GetOriginalFqlAsHtml();
+            txtQueryBreakDown.Text = entry.GetNavigators();
+            txtRankLog.Text = RankLogParser.Parse(entry.RankLog);
         }
 
         private void XmlSaveButtonClick(object sender, EventArgs e)
@@ -89,7 +93,7 @@ namespace mAdcOW.FS4SPQueryLogger
         {
             queryList.Items.Clear();
             xmlSaveButton.Enabled = false;
-            webBrowser1.DocumentText = "";
+            resultXmlBrowser.DocumentText = "";
         }
     }
 }
