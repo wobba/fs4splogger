@@ -5,6 +5,10 @@ using System.Text.RegularExpressions;
 
 namespace mAdcOW.FS4SPQueryLogger
 {
+    /// <summary>
+    /// Code copied from http://gallery.technet.microsoft.com/scriptcenter/16448603-ab52-4e28-a1a4-4e4d9ddb4dd9
+    /// and converted to C# with minor modifications
+    /// </summary>
     internal class RankLogParser
     {
         public static string Parse(string ranklog)
@@ -45,6 +49,9 @@ namespace mAdcOW.FS4SPQueryLogger
                     var res = Regex.Split(line, @"\sOP\s");
                     string ph = string.Empty;
 
+                    bool haveFreshness = false;
+                    string staticRankScore = string.Empty;
+                    string finalRankScore = string.Empty;
                     //##
                     foreach (var r in res)
                     {
@@ -64,78 +71,78 @@ namespace mAdcOW.FS4SPQueryLogger
                                 calc = match.Groups[1].Value;
                             }
 
-                            double fnum = Convert.ToDouble(calc.Substring(0, calc.IndexOf('+')));
-                            var firstocc = r.Substring(r.IndexOf(" firstocc=") + 10);
-                            firstocc = firstocc.Substring(0, firstocc.IndexOf(' '));
+                            double occuranceScore = Convert.ToDouble(calc.Substring(0, calc.IndexOf('+')));
+                            var firstOccurancePosition = r.Substring(r.IndexOf(" firstocc=") + 10);
+                            firstOccurancePosition = firstOccurancePosition.Substring(0, firstOccurancePosition.IndexOf(' '));
 
                             calc = calc.Substring(calc.IndexOf("+") + 1);
-                            double nnum = Convert.ToDouble(calc.Substring(0, calc.IndexOf("+")));
-                            var numoccs = r.Substring(r.IndexOf(" numoccs=") + 9);
-                            numoccs = numoccs.Substring(0, numoccs.IndexOf(' '));
+                            double scoreInContext = Convert.ToDouble(calc.Substring(0, calc.IndexOf("+")));
+                            var hitsInContext = r.Substring(r.IndexOf(" numoccs=") + 9);
+                            hitsInContext = hitsInContext.Substring(0, hitsInContext.IndexOf(' '));
 
                             calc = calc.Substring(calc.IndexOf("+") + 1);
-                            double eenum = Convert.ToInt32(calc.Substring(0, calc.IndexOf("+")));
+                            double scoreInAnchorAndQuery = Convert.ToInt32(calc.Substring(0, calc.IndexOf("+")));
 
-                            var extnumoccs = r.Substring(r.LastIndexOf(" extnumoccs=") + 12);
-                            extnumoccs = extnumoccs.Substring(0, extnumoccs.IndexOf(' '));
-                            double xnum = Convert.ToDouble(calc.Substring(calc.IndexOf("+") + 1));
+                            var hitsInAnchorAndQuery = r.Substring(r.LastIndexOf(" extnumoccs=") + 12);
+                            hitsInAnchorAndQuery = hitsInAnchorAndQuery.Substring(0, hitsInAnchorAndQuery.IndexOf(' '));
+                            double scoreInLevel = Convert.ToDouble(calc.Substring(calc.IndexOf("+") + 1));
 
                             var contextmap = r.Substring(r.LastIndexOf(" contextmap=") + 12);
                             contextmap = contextmap.Substring(0, contextmap.IndexOf(' '));
-                            var level = Context( contextmap);
+                            var importanceLevel = Context( contextmap);
                             var allboost = r.Substring(r.LastIndexOf(' ') + 1);
 
                             allboost = allboost.Substring(allboost.IndexOf('+') + 1);
-                            var context = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
+                            var contextScore = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
                             allboost = allboost.Substring(allboost.IndexOf('+') + 1);
-                            var proximity = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
+                            var proximityScore = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
                             allboost = allboost.Substring(allboost.IndexOf('+') + 1);
-                            var comcontx = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
+                            var commonContextScore = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('+')));
                             allboost = allboost.Substring(allboost.IndexOf('+') + 1);
-                            var oppboost = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('=')));
+                            var operatorScore = Convert.ToInt32(allboost.Substring(0, allboost.IndexOf('=')));
 
-                            double xsum = context / (fnum + nnum + eenum + xnum);
+                            double xsum = contextScore / (occuranceScore + scoreInContext + scoreInAnchorAndQuery + scoreInLevel);
 
                             rankLogReport.AppendFormat("Query term: {0}\r\n", term);
-                            rankLogReport.AppendFormat("  Context score...............: {0}\r\n", context);
-                            if (fnum != 0)
+                            rankLogReport.AppendFormat("  Context score...............: {0}\r\n", contextScore);
+                            if (occuranceScore != 0)
                             {
-                                fnum = Math.Round(fnum * xsum, 0);
+                                occuranceScore = Math.Round(occuranceScore * xsum, 0);
                                 rankLogReport.AppendFormat("    First occurence position/score......: {0}/{1}\r\n",
-                                                           firstocc, fnum);
+                                                           firstOccurancePosition, occuranceScore);
                             }
-                            if (nnum != 0)
+                            if (scoreInContext != 0)
                             {
-                                nnum = Math.Round(nnum * xsum, 0);
-                                rankLogReport.AppendFormat("    Number of hits/score in context.....: {0}/{1}\r\n",
-                                                           numoccs, nnum);
+                                scoreInContext = Math.Round(scoreInContext * xsum, 0);
+                                rankLogReport.AppendFormat("    Number of hits/score................: {0}/{1}\r\n",
+                                                           hitsInContext, scoreInContext);
                             }
 
 
-                            if (eenum != 0)
+                            if (scoreInAnchorAndQuery != 0)
                             {
-                                eenum = Math.Round(eenum * xsum, 0);
+                                scoreInAnchorAndQuery = Math.Round(scoreInAnchorAndQuery * xsum, 0);
                                 rankLogReport.AppendFormat("    Anchor & query text hits/score in...: {0}/{1}\r\n",
-                                                           extnumoccs, eenum);
+                                                           hitsInAnchorAndQuery, scoreInAnchorAndQuery);
                             }
 
-                            if (xnum != 0)
+                            if (scoreInLevel != 0)
                             {
-                                xnum = Math.Round(xnum * xsum, 0);
-                                rankLogReport.AppendFormat("    Context level/score.................: {0}/{1}\r\n",
-                                                           level, xnum);
+                                scoreInLevel = Math.Round(scoreInLevel * xsum, 0);
+                                rankLogReport.AppendFormat("    Importance level/score.................: {0}/{1}\r\n",
+                                                           importanceLevel, scoreInLevel);
                             }
-                            if (proximity != 0)
+                            if (proximityScore != 0)
                             {
-                                rankLogReport.AppendFormat("  Proximity score.............: {0}\r\n", proximity);
+                                rankLogReport.AppendFormat("  Proximity score.............: {0}\r\n", proximityScore);
                             }
-                            if (comcontx != 0)
+                            if (commonContextScore != 0)
                             {
-                                rankLogReport.AppendFormat("  Common-context score........: {0}\r\n", comcontx);
+                                rankLogReport.AppendFormat("  Common-context score........: {0}\r\n", commonContextScore);
                             }
-                            if (oppboost != 0)
+                            if (operatorScore != 0)
                             {
-                                rankLogReport.AppendFormat("  Operator score..............: {0}\r\n", oppboost);
+                                rankLogReport.AppendFormat("  Operator score..............: {0}\r\n", operatorScore);
                             }
                         }
                         else if (r.StartsWith("PHRASE,"))
@@ -185,26 +192,32 @@ namespace mAdcOW.FS4SPQueryLogger
                         }
                         else if (r.StartsWith("STATICRANK,"))
                         {
-                            var rank = r.Substring(r.LastIndexOf('=') + 1);
+                            staticRankScore = r.Substring(r.LastIndexOf('=') + 1);
+                            int spacePos = staticRankScore.IndexOf(' ');
+                            if (spacePos > 0) staticRankScore=  staticRankScore.Substring(0, spacePos);
 
                             //var rank = r.Substring(r.LastIndexOf(")=") + 2);
                             //rank = rank.Substring(0, rank.IndexOf(')'));
 
-                            rankLogReport.AppendFormat("Static rank score.............: {0}\r\n", rank);
+                            rankLogReport.AppendFormat("Static rank score.............: {0}\r\n", staticRankScore);
                         }
-
                         else if (r.StartsWith("FRESHNESS,"))
                         {
-                            var rank = r.Substring(r.LastIndexOf(")=") + 2);
-                            var totrank = r.Substring(r.LastIndexOf('=') + 1);
+                            haveFreshness = true;
+                            var freshnessScore = r.Substring(r.LastIndexOf(")=") + 2);
+                            finalRankScore = r.Substring(r.LastIndexOf('=') + 1);
 
-                            rank = rank.Substring(0, rank.IndexOf(')'));
-                            totrank = totrank.Substring(0, totrank.LastIndexOf(' '));
+                            freshnessScore = freshnessScore.Substring(0, freshnessScore.IndexOf(')'));
+                            finalRankScore = finalRankScore.Substring(0, finalRankScore.LastIndexOf(' '));
 
-                            rankLogReport.AppendFormat("Freshness score...............: {0}\r\n", rank);
-                            rankLogReport.AppendFormat("Total Rank score.........: {0}\r\n", totrank);
+                            rankLogReport.AppendFormat("Freshness score...............: {0}\r\n", freshnessScore);
                         }
                     }
+                    if( !haveFreshness)
+                    {
+                        finalRankScore = staticRankScore;
+                    }
+                    rankLogReport.AppendFormat("Total Rank score.........: {0}\r\n", finalRankScore);
                 }
             }
             return rankLogReport.ToString();
