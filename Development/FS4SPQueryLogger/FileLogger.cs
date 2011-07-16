@@ -4,13 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
 using System.Timers;
 using System.Web;
-using System.Xml;
-using System.Xml.Xsl;
 
 namespace mAdcOW.FS4SPQueryLogger
 {
@@ -22,22 +19,16 @@ namespace mAdcOW.FS4SPQueryLogger
         private static readonly object _lock = new object();
         private readonly Timer _timer = new Timer(500);
         private long _lastMaxOffset;
-        private readonly XslCompiledTransform _xct;
-        private string _qrLocation;
+        private readonly string _qrLocation;
 
         public FileLogger(string qrLocation)
         {
             _qrLocation = qrLocation;
-            Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("mAdcOW.FS4SPQueryLogger.xmlrender.xslt");
-            XmlReader xr = XmlReader.Create(s);
-            _xct = new XslCompiledTransform();
-            _xct.Load(xr);
-
             _logPath = Path.Combine(Environment.GetEnvironmentVariable("FASTSEARCH"), @"var\log\querylogs");
-            _timer.Elapsed += _timer_Elapsed;
+            _timer.Elapsed += TimerElapsed;
         }
 
-        private void _timer_Elapsed(object sender, ElapsedEventArgs e)
+        private void TimerElapsed(object sender, ElapsedEventArgs e)
         {
             if (!_logging) return;
             lock (_lock)
@@ -60,8 +51,6 @@ namespace mAdcOW.FS4SPQueryLogger
                                          Xml = GetQueryResultXml(query),
                                          RankLog = GetQueryRankLog(query)
                                      };
-                entry.Html = GetQueryResultHtml(entry.Xml);
-
                 // do new query and pass back query with QR xml
                 _action.EndInvoke(_action.BeginInvoke(entry, null, null));
             }
@@ -102,19 +91,6 @@ namespace mAdcOW.FS4SPQueryLogger
             string url = _qrLocation + "/cgi-bin/search" + query + "&ranklog&nolog";
             WebClient client = new WebClient();
             return client.DownloadString(url);
-        }
-
-        private string GetQueryResultHtml(string xml)
-        {
-            StringReader sReader = new StringReader(xml);
-            XmlReader reader = XmlReader.Create(sReader);
-
-            StringBuilder sb = new StringBuilder();
-            using (XmlWriter xw = XmlWriter.Create(sb))
-            {
-                _xct.Transform(reader, xw);
-            }
-            return sb.ToString();
         }
 
         private string GetCurrentFile()

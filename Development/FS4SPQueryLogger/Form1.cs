@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -22,8 +23,7 @@ namespace mAdcOW.FS4SPQueryLogger
             }
 
             InitializeComponent();
-            _act = query => queryList.Invoke(new MethodInvoker(
-                                                 () => queryList.Items.Add(query)));
+            _act = query => queryList.Invoke(new MethodInvoker(() => queryList.Items.Add(query)));
             resultXmlBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser1_DocumentCompleted);
         }
 
@@ -35,6 +35,14 @@ namespace mAdcOW.FS4SPQueryLogger
                 // set the y-position for the element
                 resultXmlBrowser.Document.Window.ScrollTo(0, entry.Ypos);
             }
+            string tempFile = resultXmlBrowser.Url.LocalPath;
+            try
+            {
+                File.Delete(tempFile);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void LogButtonClick(object sender, EventArgs e)
@@ -44,7 +52,7 @@ namespace mAdcOW.FS4SPQueryLogger
                 _isLogging = true;
                 logButton.Text = "Stop Logging";
                 queryList.DisplayMember = "Query";
-                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] {' ', '/'}));
+                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] { ' ', '/' }));
                 _logger.Start(_act);
             }
             else
@@ -58,15 +66,19 @@ namespace mAdcOW.FS4SPQueryLogger
         private void QueryListSelectedIndexChanged(object sender, EventArgs e)
         {
             xmlSaveButton.Enabled = true;
-            var entry = (LogEntry) queryList.SelectedItem;
-            if (entry == null) return;            
+            var entry = (LogEntry)queryList.SelectedItem;
+            if (entry == null) return;
             if (_lastEntry != null && resultXmlBrowser.Document.Body != null)
             {
                 // save the current Y position
                 _lastEntry.Ypos = resultXmlBrowser.Document.Body.ScrollTop;
             }
             _lastEntry = entry;
-            resultXmlBrowser.DocumentText = entry.Html;
+
+            var tempFile = Path.ChangeExtension(Path.GetTempFileName(), "xml");
+            File.WriteAllText(tempFile, entry.Xml);
+            resultXmlBrowser.Navigate(tempFile);
+
             fqlBrowser.DocumentText = entry.GetOriginalFqlAsHtml();
             txtQueryBreakDown.Text = entry.GetNavigators();
             txtRankLog.Text = RankLogParser.Parse(entry.RankLog);
@@ -83,7 +95,7 @@ namespace mAdcOW.FS4SPQueryLogger
             {
                 using (StreamWriter writer = new StreamWriter(saveXmlDialog.OpenFile()))
                 {
-                    var entry = (LogEntry) queryList.SelectedItem;
+                    var entry = (LogEntry)queryList.SelectedItem;
                     writer.Write(entry.Xml);
                 }
             }
