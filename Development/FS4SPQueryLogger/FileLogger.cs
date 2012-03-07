@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.AccessControl;
 using System.Text;
 using System.Timers;
 using System.Web;
@@ -21,12 +21,14 @@ namespace mAdcOW.FS4SPQueryLogger
         private long _lastMaxOffset;
         private readonly string _qrLocation;
 
-        public FileLogger(string qrLocation, int interval)
+        public FileLogger(string qrLocation, int interval, ISynchronizeInvoke form)
         {
             _qrLocation = qrLocation;
             _logPath = Path.Combine(Environment.GetEnvironmentVariable("FASTSEARCH"), @"var\log\querylogs");
             _timer = new Timer(interval);
             _timer.Elapsed += TimerElapsed;
+            _timer.AutoReset = true;
+            _timer.SynchronizingObject = form;
         }
 
         private void TimerElapsed(object sender, ElapsedEventArgs e)
@@ -55,7 +57,8 @@ namespace mAdcOW.FS4SPQueryLogger
                                          FileName = fileName
                                      };
                 // do new query and pass back query with QR xml
-                _action.EndInvoke(_action.BeginInvoke(entry, null, null));
+                _action.Invoke(entry);
+                //_action.EndInvoke(_action.BeginInvoke(entry, null, null));
             }
         }
 

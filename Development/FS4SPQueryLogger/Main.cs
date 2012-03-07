@@ -80,7 +80,7 @@ namespace mAdcOW.FS4SPQueryLogger
                 queryList.DisplayMember = "Query";
                 int interval;
                 if (!int.TryParse(intervalMs.Text, out interval)) interval = 500;
-                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] { ' ', '/' }), interval);
+                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] { ' ', '/' }), interval, this);
                 _logger.Start(_action);
             }
             else
