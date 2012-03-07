@@ -306,7 +306,8 @@ namespace mAdcOW.FS4SPQueryLogger
             this.Controls.Add(this.logButton);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Main";
-            this.Text = "FS4SP Query Logger - by Mikael Svenson (@mikaelsvenson - miksvenson@gmail.com)";
+            this.Text = "FS4SP Query Logger v3 - by Mikael Svenson (@mikaelsvenson - miksvenson@gmail.com)" +
+    "";
             this.tabControl1.ResumeLayout(false);
             this.xml.ResumeLayout(false);
             this.fql.ResumeLayout(false);
