@@ -2,7 +2,7 @@
 
 namespace mAdcOW.FS4SPQueryLogger
 {
-    partial class Form1
+    partial class Main
     {
         /// <summary>
         /// Required designer variable.
@@ -30,7 +30,7 @@ namespace mAdcOW.FS4SPQueryLogger
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.logButton = new System.Windows.Forms.Button();
             this.queryList = new System.Windows.Forms.ListBox();
             this.resultXmlBrowser = new System.Windows.Forms.WebBrowser();
@@ -49,6 +49,10 @@ namespace mAdcOW.FS4SPQueryLogger
             this.rankLog = new System.Windows.Forms.TabPage();
             this.txtRankLog = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.intervalMs = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.logfileName = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.xml.SuspendLayout();
             this.fql.SuspendLayout();
@@ -61,16 +65,16 @@ namespace mAdcOW.FS4SPQueryLogger
             this.logButton.Font = new System.Drawing.Font("Berlin Sans FB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.logButton.Location = new System.Drawing.Point(13, 13);
             this.logButton.Name = "logButton";
-            this.logButton.Size = new System.Drawing.Size(92, 23);
+            this.logButton.Size = new System.Drawing.Size(108, 23);
             this.logButton.TabIndex = 0;
-            this.logButton.Text = "Start Logging";
+            this.logButton.Text = "Start Monitoring";
             this.logButton.UseVisualStyleBackColor = false;
             this.logButton.Click += new System.EventHandler(this.LogButtonClick);
             // 
             // queryList
             // 
-            this.queryList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)));
+            this.queryList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.queryList.Font = new System.Drawing.Font("Century Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.queryList.FormattingEnabled = true;
             this.queryList.ItemHeight = 17;
@@ -138,7 +142,7 @@ namespace mAdcOW.FS4SPQueryLogger
             this.clearQueryListButton.TabIndex = 6;
             this.clearQueryListButton.Text = "Clear";
             this.clearQueryListButton.UseVisualStyleBackColor = false;
-            this.clearQueryListButton.Click += new System.EventHandler(this.clearQueryListButton_Click);
+            this.clearQueryListButton.Click += new System.EventHandler(this.ClearQueryListButtonClick);
             // 
             // label3
             // 
@@ -179,9 +183,9 @@ namespace mAdcOW.FS4SPQueryLogger
             // 
             // tabControl1
             // 
-            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.xml);
             this.tabControl1.Controls.Add(this.fql);
             this.tabControl1.Controls.Add(this.rankLog);
@@ -238,15 +242,57 @@ namespace mAdcOW.FS4SPQueryLogger
             this.label4.Font = new System.Drawing.Font("Berlin Sans FB", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(13, 379);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(48, 15);
+            this.label4.Size = new System.Drawing.Size(62, 15);
             this.label4.TabIndex = 13;
-            this.label4.Text = "Refiners";
+            this.label4.Text = "Query Info";
             // 
-            // Form1
+            // intervalMs
+            // 
+            this.intervalMs.Font = new System.Drawing.Font("Berlin Sans FB", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.intervalMs.Location = new System.Drawing.Point(203, 15);
+            this.intervalMs.Name = "intervalMs";
+            this.intervalMs.Size = new System.Drawing.Size(42, 22);
+            this.intervalMs.TabIndex = 15;
+            this.intervalMs.Text = "500";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Berlin Sans FB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(127, 18);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(70, 13);
+            this.label5.TabIndex = 14;
+            this.label5.Text = "Interval (ms)";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Berlin Sans FB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(515, 18);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(45, 13);
+            this.label6.TabIndex = 16;
+            this.label6.Text = "Log file:";
+            // 
+            // logfileName
+            // 
+            this.logfileName.AutoSize = true;
+            this.logfileName.Font = new System.Drawing.Font("Berlin Sans FB", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.logfileName.Location = new System.Drawing.Point(566, 18);
+            this.logfileName.Name = "logfileName";
+            this.logfileName.Size = new System.Drawing.Size(0, 13);
+            this.logfileName.TabIndex = 17;
+            // 
+            // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(897, 542);
+            this.Controls.Add(this.logfileName);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.intervalMs);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.txtQueryBreakDown);
@@ -259,7 +305,7 @@ namespace mAdcOW.FS4SPQueryLogger
             this.Controls.Add(this.queryList);
             this.Controls.Add(this.logButton);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "Form1";
+            this.Name = "Main";
             this.Text = "FS4SP Query Logger - by Mikael Svenson (@mikaelsvenson - miksvenson@gmail.com)";
             this.tabControl1.ResumeLayout(false);
             this.xml.ResumeLayout(false);
@@ -291,6 +337,10 @@ namespace mAdcOW.FS4SPQueryLogger
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TabPage rankLog;
         private System.Windows.Forms.TextBox txtRankLog;
+        private System.Windows.Forms.TextBox intervalMs;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label logfileName;
     }
 }
 

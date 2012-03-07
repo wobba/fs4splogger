@@ -17,14 +17,15 @@ namespace mAdcOW.FS4SPQueryLogger
         private Action<LogEntry> _action;
         private bool _logging;
         private static readonly object _lock = new object();
-        private readonly Timer _timer = new Timer(500);
+        private readonly Timer _timer;
         private long _lastMaxOffset;
         private readonly string _qrLocation;
 
-        public FileLogger(string qrLocation)
+        public FileLogger(string qrLocation, int interval)
         {
             _qrLocation = qrLocation;
             _logPath = Path.Combine(Environment.GetEnvironmentVariable("FASTSEARCH"), @"var\log\querylogs");
+            _timer = new Timer(interval);
             _timer.Elapsed += TimerElapsed;
         }
 
@@ -33,7 +34,8 @@ namespace mAdcOW.FS4SPQueryLogger
             if (!_logging) return;
             lock (_lock)
             {
-                string line = ReadLastLine(GetCurrentFile());
+                string fileName = GetCurrentFile();
+                string line = ReadLastLine(fileName);
                 int start = line.IndexOf("GET ");
                 if (start == -1) return;
 
@@ -47,9 +49,10 @@ namespace mAdcOW.FS4SPQueryLogger
                 LogEntry entry = new LogEntry
                                      {
                                          Query = dt.ToString("yyyy-MM-dd HH:mm:ss") + " " + param["query"],
-                                         HttpParams = query,
+                                         HttpParams = param,
                                          Xml = GetQueryResultXml(query),
-                                         RankLog = GetQueryRankLog(query)
+                                         RankLog = GetQueryRankLog(query),
+                                         FileName = fileName
                                      };
                 // do new query and pass back query with QR xml
                 _action.EndInvoke(_action.BeginInvoke(entry, null, null));
@@ -125,8 +128,7 @@ namespace mAdcOW.FS4SPQueryLogger
             byte[] buffer = encoding.GetBytes(newline);
 
             using (
-                FileStream stream = new FileStream(path, FileMode.Open, FileSystemRights.Read, FileShare.ReadWrite,
-                                                   16384, FileOptions.RandomAccess))
+                FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 16384, FileOptions.RandomAccess))
             {
                 long endpos = stream.Length / charsize;
                 if (endpos == _lastMaxOffset) return string.Empty;

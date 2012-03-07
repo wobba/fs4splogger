@@ -1,20 +1,18 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
 using System.Text;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace mAdcOW.FS4SPQueryLogger
 {
-    public partial class Form1 : Form
+    public partial class Main : Form
     {
         private bool _isLogging;
         private FileLogger _logger;
-        private readonly Action<LogEntry> _act;
+        private readonly Action<LogEntry> _action;
         private LogEntry _lastEntry;
 
-        public Form1()
+        public Main()
         {
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FASTSEARCH")))
             {
@@ -22,15 +20,43 @@ namespace mAdcOW.FS4SPQueryLogger
                 Environment.Exit(0);
             }
 
+            try
+            {
+                // Try to read the log folder
+                var logPath = Path.Combine(Environment.GetEnvironmentVariable("FASTSEARCH"), @"var\log\querylogs");
+                DirectoryInfo di = new DirectoryInfo(logPath);
+                FileSystemInfo[] fileSystemInfos = di.GetFileSystemInfos();
+                if (fileSystemInfos.Length > 0)
+                {
+                    using (FileStream stream = new FileStream(fileSystemInfos[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        stream.ReadByte();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("No log files available");
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                Environment.Exit(0);
+            }
+
             InitializeComponent();
-            _act = query => queryList.Invoke(new MethodInvoker(() => queryList.Items.Add(query)));
-            resultXmlBrowser.DocumentCompleted += new WebBrowserDocumentCompletedEventHandler(webBrowser1_DocumentCompleted);
+            _action = logEntry => queryList.Invoke(new MethodInvoker(() =>
+            {
+                queryList.Items.Add(logEntry);
+                logfileName.Text = logEntry.FileName;
+            }));
+            resultXmlBrowser.DocumentCompleted += WebBrowser1DocumentCompleted;
         }
 
-        void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        private void WebBrowser1DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             var entry = (LogEntry)queryList.SelectedItem;
-            if (resultXmlBrowser.Document.Body != null)
+            if (resultXmlBrowser.Document != null && resultXmlBrowser.Document.Body != null)
             {
                 // set the y-position for the element
                 resultXmlBrowser.Document.Window.ScrollTo(0, entry.Ypos);
@@ -40,7 +66,7 @@ namespace mAdcOW.FS4SPQueryLogger
             {
                 File.Delete(tempFile);
             }
-            catch (Exception)
+            catch
             {
             }
         }
@@ -50,10 +76,12 @@ namespace mAdcOW.FS4SPQueryLogger
             if (!_isLogging)
             {
                 _isLogging = true;
-                logButton.Text = "Stop Logging";
+                logButton.Text = "Stop Monitoring";
                 queryList.DisplayMember = "Query";
-                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] { ' ', '/' }));
-                _logger.Start(_act);
+                int interval;
+                if (!int.TryParse(intervalMs.Text, out interval)) interval = 500;
+                _logger = new FileLogger(qrServerLocation.Text.Trim(new[] { ' ', '/' }), interval);
+                _logger.Start(_action);
             }
             else
             {
@@ -68,7 +96,7 @@ namespace mAdcOW.FS4SPQueryLogger
             xmlSaveButton.Enabled = true;
             var entry = (LogEntry)queryList.SelectedItem;
             if (entry == null) return;
-            if (_lastEntry != null && resultXmlBrowser.Document.Body != null)
+            if (_lastEntry != null && resultXmlBrowser.Document != null && resultXmlBrowser.Document.Body != null)
             {
                 // save the current Y position
                 _lastEntry.Ypos = resultXmlBrowser.Document.Body.ScrollTop;
@@ -80,7 +108,7 @@ namespace mAdcOW.FS4SPQueryLogger
             resultXmlBrowser.Navigate(tempFile);
 
             fqlBrowser.DocumentText = entry.GetOriginalFqlAsHtml();
-            txtQueryBreakDown.Text = entry.GetNavigators();
+            txtQueryBreakDown.Text = entry.GetQueryInfo();
             txtRankLog.Text = RankLogParser.Parse(entry.RankLog);
         }
 
@@ -101,7 +129,7 @@ namespace mAdcOW.FS4SPQueryLogger
             }
         }
 
-        private void clearQueryListButton_Click(object sender, EventArgs e)
+        private void ClearQueryListButtonClick(object sender, EventArgs e)
         {
             queryList.Items.Clear();
             xmlSaveButton.Enabled = false;
