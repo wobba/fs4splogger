@@ -1,17 +1,11 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FS4SPQueryLogger", "FS4SPQueryLogger.csproj", "{D6A17970-E195-489D-987A-81F7338F5834}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "..\test\test.csproj", "{D6EE554F-3E41-4E72-B569-2E00BE574C35}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 2
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs03
-		SccProjectUniqueName0 = FS4SPQueryLogger.csproj
-		SccLocalPath0 = .
-		SccLocalPath1 = .
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
@@ -21,6 +15,9 @@ Global
 		{D6A17970-E195-489D-987A-81F7338F5834}.Debug|x86.Build.0 = Debug|x86
 		{D6A17970-E195-489D-987A-81F7338F5834}.Release|x86.ActiveCfg = Release|x86
 		{D6A17970-E195-489D-987A-81F7338F5834}.Release|x86.Build.0 = Release|x86
+		{D6EE554F-3E41-4E72-B569-2E00BE574C35}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D6EE554F-3E41-4E72-B569-2E00BE574C35}.Debug|x86.Build.0 = Debug|Any CPU
+		{D6EE554F-3E41-4E72-B569-2E00BE574C35}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

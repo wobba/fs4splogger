@@ -110,6 +110,7 @@ namespace mAdcOW.FS4SPQueryLogger
             fqlBrowser.DocumentText = entry.GetOriginalFqlAsHtml();
             txtQueryBreakDown.Text = entry.GetQueryInfo();
             txtRankLog.Text = RankLogParser.Parse(entry.RankLog);
+            rankLogRawText.Text = entry.RankLog;
         }
 
         private void XmlSaveButtonClick(object sender, EventArgs e)

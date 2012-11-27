@@ -48,6 +48,8 @@ namespace mAdcOW.FS4SPQueryLogger
             this.fql = new System.Windows.Forms.TabPage();
             this.rankLog = new System.Windows.Forms.TabPage();
             this.txtRankLog = new System.Windows.Forms.TextBox();
+            this.rankLogRawPage = new System.Windows.Forms.TabPage();
+            this.rankLogRawText = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.intervalMs = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -57,6 +59,7 @@ namespace mAdcOW.FS4SPQueryLogger
             this.xml.SuspendLayout();
             this.fql.SuspendLayout();
             this.rankLog.SuspendLayout();
+            this.rankLogRawPage.SuspendLayout();
             this.SuspendLayout();
             // 
             // logButton
@@ -189,6 +192,7 @@ namespace mAdcOW.FS4SPQueryLogger
             this.tabControl1.Controls.Add(this.xml);
             this.tabControl1.Controls.Add(this.fql);
             this.tabControl1.Controls.Add(this.rankLog);
+            this.tabControl1.Controls.Add(this.rankLogRawPage);
             this.tabControl1.Location = new System.Drawing.Point(306, 83);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -228,12 +232,35 @@ namespace mAdcOW.FS4SPQueryLogger
             // txtRankLog
             // 
             this.txtRankLog.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtRankLog.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.txtRankLog.Location = new System.Drawing.Point(0, 0);
             this.txtRankLog.Multiline = true;
             this.txtRankLog.Name = "txtRankLog";
             this.txtRankLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtRankLog.Size = new System.Drawing.Size(571, 420);
             this.txtRankLog.TabIndex = 0;
+            // 
+            // rankLogRawPage
+            // 
+            this.rankLogRawPage.Controls.Add(this.rankLogRawText);
+            this.rankLogRawPage.Location = new System.Drawing.Point(4, 22);
+            this.rankLogRawPage.Name = "rankLogRawPage";
+            this.rankLogRawPage.Padding = new System.Windows.Forms.Padding(3);
+            this.rankLogRawPage.Size = new System.Drawing.Size(571, 420);
+            this.rankLogRawPage.TabIndex = 3;
+            this.rankLogRawPage.Text = "Rank Log RAW";
+            this.rankLogRawPage.UseVisualStyleBackColor = true;
+            // 
+            // rankLogRawText
+            // 
+            this.rankLogRawText.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rankLogRawText.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.rankLogRawText.Location = new System.Drawing.Point(3, 3);
+            this.rankLogRawText.Multiline = true;
+            this.rankLogRawText.Name = "rankLogRawText";
+            this.rankLogRawText.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.rankLogRawText.Size = new System.Drawing.Size(565, 414);
+            this.rankLogRawText.TabIndex = 1;
             // 
             // label4
             // 
@@ -306,13 +333,15 @@ namespace mAdcOW.FS4SPQueryLogger
             this.Controls.Add(this.logButton);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Main";
-            this.Text = "FS4SP Query Logger v3 - by Mikael Svenson (@mikaelsvenson - miksvenson@gmail.com)" +
-    "";
+            this.Text = "FS4SP Query Logger v4 - by Mikael Svenson (@mikaelsvenson - miksvenson@gmail.com)" +
+    ", Alexey Kozhemiakin (alexey.kozhemiakin@gmail.com)";
             this.tabControl1.ResumeLayout(false);
             this.xml.ResumeLayout(false);
             this.fql.ResumeLayout(false);
             this.rankLog.ResumeLayout(false);
             this.rankLog.PerformLayout();
+            this.rankLogRawPage.ResumeLayout(false);
+            this.rankLogRawPage.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -342,6 +371,8 @@ namespace mAdcOW.FS4SPQueryLogger
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label logfileName;
+        private System.Windows.Forms.TabPage rankLogRawPage;
+        private System.Windows.Forms.TextBox rankLogRawText;
     }
 }
 
