@@ -37,6 +37,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="microsoft.sharepoint.search.extended.administration">
+      <HintPath>.\microsoft.sharepoint.search.extended.administration.dll</HintPath>
+    </Reference>
+    <Reference Include="microsoft.sharepoint.search.extended.administration.common">
+      <HintPath>.\microsoft.sharepoint.search.extended.administration.common.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />

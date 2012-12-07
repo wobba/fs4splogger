@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-
+using System.Windows.Forms;
+using Microsoft.SharePoint.Search.Extended.Administration;
+using Microsoft.SharePoint.Search.Extended.Administration.Schema;
 namespace mAdcOW.FS4SPQueryLogger
 {
     /// <summary>
@@ -53,7 +56,7 @@ namespace mAdcOW.FS4SPQueryLogger
                 string ph = string.Empty;
 
                 bool haveFreshness = false;
-                string staticRankScore = string.Empty;
+                
                 string finalRankScore = string.Empty;
                 //##
                 foreach (var r in res)
@@ -196,27 +199,45 @@ namespace mAdcOW.FS4SPQueryLogger
                     }
                     else if (r.StartsWith("STATICRANK,"))
                     {
-                        staticRankScore = r.Substring(r.LastIndexOf(' ') + 1);
-                        int spacePos = staticRankScore.IndexOf(' ');
-                        if (spacePos > 0)
-                            staticRankScore=  staticRankScore.Substring(0, spacePos);
-
-                        StaticRank staticRank = new StaticRank();
+                        QualityRank qualityRank = new QualityRank();
                         
-                        staticRank.UrlDepthRank = ParseWeightedValue(r, "batvurldepthrank");
-                        staticRank.SiteRank = ParseWeightedValue(r, "batvsiterank");
-                        staticRank.DocRank = ParseWeightedValue(r, "batvdocrank");
-                        staticRank.HwBoost = ParseWeightedValue(r, "batvhwboost");
+                        // batv(name)[num]->num * num
+                        Regex reg = new Regex(@"batv([\w\d]+)\[(\d+)\]->([\d.]+)\s\*\s([\d.]+)");
+                        var matches = reg.Matches(r);
+                        foreach (Match m in matches)
+                        {
+                            QualityRankComponent c= new QualityRankComponent();
+                            c.Name = m.Groups[1].Value;
 
-                        staticRank.Components = staticRankScore;
+                            var fastFormat = new NumberFormatInfo() { NumberDecimalSeparator = "." };
+                            try
+                            {
+                                c.Value = float.Parse(m.Groups[3].Value, fastFormat);
+                                c.Weight = float.Parse(m.Groups[4].Value, fastFormat);
+                            }
+                            catch{}
+                            qualityRank.Components.Add(c);
+                        }
 
-                        //TODO Verify sum
+                        // A+B+C=D
+                        string normalPattern   = @"\d+\+\d+\+\d+=\d+";
+                        // A+B/X+C=D
+                        string weightedPattern = @"\d+\+\d+/(\d+)\+\d+=\d+";
+                        Match normalScore = Regex.Match(r, normalPattern);
+                        if (!normalScore.Success)
+                        {
+                            //try case when B is reduced
+                            Match weightedScore = Regex.Match(r, weightedPattern);
+                            if (weightedScore.Success)
+                            {
+                                qualityRank.Reduction = Int32.Parse(weightedScore.Groups[1].Value);
+                            }
+                        }
 
-                        rankLog.StaticRank = staticRank;
+                        rankLog.QualityRank = qualityRank;
                     }
                     else if (r.StartsWith("FRESHNESS,"))
                     {
-                        haveFreshness = true;
                         var freshnessScore = r.Substring(r.LastIndexOf(")=") + 2);
                         finalRankScore = r.Substring(r.LastIndexOf('=') + 1);
 
@@ -226,56 +247,33 @@ namespace mAdcOW.FS4SPQueryLogger
                         
                         finalRankScore = finalRankScore.Substring(0, finalRankScore.LastIndexOf(' '));
 
-                        rankLog.DynamicRank.Freshness = freshness;
+                        rankLog.FreshnessRank = freshness;
                         rankLog.TotalScore = finalRankScore;
                     }
-                }
-                if( !haveFreshness)
-                {
-                    rankLog.TotalScore = staticRankScore;
                 }
             }
 
             return rankLog;
         }
-
-        static WeightedValue ParseWeightedValue(string input, string pattern)
+        
+        private static Dictionary<int, string> _mappings = new Dictionary<int, string>(); 
+        
+        private static string GetPropertyByMappingLevel(int priorityLevel)
         {
-            var x = GiveSubstring(input, pattern, '>', ')');
-            WeightedValue weightedValue = new WeightedValue();
-
-            var starIndex = x.IndexOf('*');
-            if (starIndex == -1)
-                return weightedValue;
-
-            try
+            if (_mappings.Count == 0)
             {
-                weightedValue.Value = float.Parse(x.Substring(0, starIndex).Trim());
-                weightedValue.Weight = float.Parse(x.Substring(starIndex + 1, x.Length - starIndex - 1));
+                InitFullTextMappings();
             }
-            catch
+
+            if (_mappings.ContainsKey(priorityLevel))
             {
+                return _mappings[priorityLevel];
             }
-            return weightedValue;
-        }
 
-        static string GiveSubstring(string all, string query, char from, char to)
-        {
-            int subIndex = all.IndexOf(query);
-            if (subIndex > 0)
-            {
-                int toIndex = all.IndexOf(to, subIndex);
-                int fromIndex = all.IndexOf(from, subIndex);
-
-                var substring = all.Substring(fromIndex+1, toIndex - fromIndex-1);
-
-                return substring;
-            }
             return string.Empty;
         }
 
-        // To be integrated with FAST via PowerShell or direct API
-        private static string GetPropertyByMappingLevel(int priorityLevel)
+        private static Dictionary<int, string> InitDefault()
         {
             var mappings = new Dictionary<int, string>();
             mappings.Add(8, "anchortext;assocqueries");
@@ -286,12 +284,36 @@ namespace mAdcOW.FS4SPQueryLogger
             mappings.Add(2, "Author; CreatedBY; ModifiedBy; MetadataAuthor; WorkEmail");
             mappings.Add(1, "body; crawledpropertiescontent");
 
-            if (mappings.ContainsKey(priorityLevel))
-            {
-                return mappings[priorityLevel];
-            }
+            return mappings;
+        }
 
-            return string.Empty;
+        public static void InitFullTextMappings()
+        {
+            _mappings = new Dictionary<int, string>();
+            try
+            {
+                SchemaContext schemaContext = new SchemaContext();
+                Schema indexSchema = schemaContext.Schema;
+                var ind = indexSchema.AllFullTextIndecies.FirstOrDefault(index => index.isDefault);
+                
+                foreach(int level in Enum.GetValues(typeof(FullTextIndexImportanceLevel)))
+                {
+                    string prop = string.Empty;
+                    foreach (var map in ind.GetMappingsForLevel(level))
+                    {
+                        prop += map.Name + "; ";
+                    }
+
+                    if (!string.IsNullOrEmpty(prop))
+                    {
+                        _mappings.Add(level, prop);
+                    }
+                }
+            }
+            catch
+            {
+                _mappings = InitDefault();
+            }
         }
 
         static Dictionary<int, string> Context(string inp)
@@ -316,8 +338,9 @@ namespace mAdcOW.FS4SPQueryLogger
 
     public class RankLog
     {
-        public StaticRank StaticRank = new StaticRank();
+        public QualityRank QualityRank = new QualityRank();
         public DynamicRank DynamicRank = new DynamicRank();
+        public int FreshnessRank;
 
         public string TotalScore;
 
@@ -326,8 +349,9 @@ namespace mAdcOW.FS4SPQueryLogger
             StringBuilder s = new StringBuilder();
 
             s.AppendFormat("Total Rank score.........: {0} sum of\r\n", TotalScore);
+            s.AppendFormat("Freshness score................: {0}\r\n", FreshnessRank);
 
-            s.Append(StaticRank);
+            s.Append(QualityRank);
             s.Append(DynamicRank);
             
 
@@ -335,10 +359,11 @@ namespace mAdcOW.FS4SPQueryLogger
         }
     }
 
-    public class WeightedValue
+    public class QualityRankComponent
     {
         public float Value = 0;
         public float Weight = 0;
+        public string Name = string.Empty;
 
         public int Score
         {
@@ -351,29 +376,35 @@ namespace mAdcOW.FS4SPQueryLogger
         }
     }
 
-    public class StaticRank
+    public class QualityRank
     {
-        public WeightedValue DocRank = new WeightedValue();
-        public WeightedValue SiteRank = new WeightedValue();
-        public WeightedValue UrlDepthRank = new WeightedValue();
-        public WeightedValue HwBoost = new WeightedValue();
-
-        public string Components = string.Empty;
+        public List<QualityRankComponent> Components = new List<QualityRankComponent>();
+        public int Reduction = 1;
 
         public int Score
         {
-            get { return (int) (DocRank.Score + SiteRank.Score + HwBoost.Score + UrlDepthRank.Score); }
+            get
+            {
+                return Components.Sum(c=>c.Score) / Reduction;
+            }
         }
 
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
-            
-            s.AppendFormat("Static rank score..............: {0} sum of\r\n", Score);
-            s.AppendFormat("   Url Depth Rank...................: {0}\r\n", UrlDepthRank);
-            s.AppendFormat("   Site Rank........................: {0}\r\n", SiteRank);
-            s.AppendFormat("   Doc Rank.........................: {0}\r\n", DocRank);
-            s.AppendFormat("   HW Boost.........................: {0}\r\n", HwBoost);
+
+            string reductionMessage = string.Empty;
+            if (Reduction > 1)
+            {
+                reductionMessage = string.Format("(={0}/{1}, because Context Score <= 0)", Components.Sum(c=>c.Score), Reduction);
+            }
+
+            s.AppendFormat("Quality rank score.............: {0} {1} sum of\r\n", Score, reductionMessage);
+            foreach (var component in Components)
+            {
+                var dots = new string('.', 33 - component.Name.Length); // 33 magic number for alighmnent
+                s.AppendFormat("   {0}{1}: {2}\r\n", component.Name, dots, component);
+            }
 
             return s.ToString();
         }
@@ -381,8 +412,6 @@ namespace mAdcOW.FS4SPQueryLogger
 
     public class DynamicRank
     {
-        public int Freshness;
-        
         public int ProximityScore;
         public int CommonContextScore;
         public int OperatorScore;
@@ -406,7 +435,9 @@ namespace mAdcOW.FS4SPQueryLogger
                     score += term.Score;
                 }
 
-                score += Freshness;
+                if (score < 0)
+                    score = 0;
+
                 score += ProximityScore;
                 score += CommonContextScore;
                 score += OperatorScore;
@@ -417,9 +448,8 @@ namespace mAdcOW.FS4SPQueryLogger
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
-
-            s.AppendFormat("Dynamic rank score.............: {0} sum of \r\n", Score);
-            s.AppendFormat("   Freshness score..................: {0}\r\n", Freshness);
+            
+            s.AppendFormat("Context & Authority score......: {0} sum of \r\n", Score);
             
             if (ProximityScore != 0)
             s.AppendFormat("   Proximity score..................: {0}\r\n", ProximityScore);
